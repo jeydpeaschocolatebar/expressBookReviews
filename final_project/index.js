@@ -11,10 +11,22 @@ app.use(express.json());
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+    const token = req.session.authorization && req.session.authorization.accessToken;
+    if (!token) {
+        return res.status(403).json({message: "User not logged in"});
+    }
+    
+    const jwtSecret = 'access'; // General secret for access tokens; in a real application, this should be more secure and stored in an environment variable
+    jwt.verify(token, jwtSecret, (err, user) => {
+        if (err) {
+        return res.status(403).json({message: "Invalid token"});
+        }
+        req.user = user.data; // Store the username in the request object
+        next();
+    });
 });
  
-const PORT =5000;
+const PORT =4949;
 
 app.use("/customer", customer_routes);
 app.use("/", genl_routes);
